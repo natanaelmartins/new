@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diário de tarefas</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    /* Custom styles for Kanban board */
+    body {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      font-family: "Press Start 2P", sans-serif;
+    }
+
+    .kanban-board {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .kanban-column {
+      flex: 1;
+      margin: 0 10px;
+      padding: 10px;
+      border: 1px solid #3a3a3a;
+      border-radius: 5px;
+      background-color: #2c2c2c;
+    }
+
+    .kanban-column h2 {
+      text-align: center;
+    }
+
+    .kanban-task {
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #4a4a4a;
+      border-radius: 5px;
+      background-color: #383838;
+      cursor: move;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .task-deadline {
+      border: 1px solid #4a4a4a;
+      padding: 10px;
+      margin-top: 5px;
+      background-color: #2c2c2c;
+    }
+
+    .kanban-task:hover {
+      background-color: #454545;
+    }
+
+    .kanban-task .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .kanban-task .actions button {
+      padding: 5px 10px;
+      border: none;
+      background-color: #007bff;
+      color: #fff;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .kanban-task .actions button:hover {
+      background-color: #0056b3;
+    }
+
+    .kanban-task .actions .delete {
+      background-color: #dc3545;
+    }
+
+    .kanban-task .actions .delete:hover {
+      background-color: #c82333;
+    }
+
+    .add-task-form {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .add-task-form input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #3a3a3a;
+      border-radius: 3px;
+      background-color: #2c2c2c;
+      color: #e0e0e0;
+    }
+
+    .button-generate-task,
+    .add-task-form button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #2a7a2a;
+      color: #e0e0e0;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .button-generate-task:hover,
+    .add-task-form button:hover {
+      background-color: #45a049;
+    }
+
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      border-width: 0.3rem;
+    }
+
+    .spinner-div {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+    }
+
+    .prazo-container {
+      display: flex;
+      align-items: center;
+      margin-top: 5px;
+    }
+
+    .prazo-label {
+      margin-right: 5px;
+      font-weight: bold;
+    }
+
+    .task-deadline {
+      flex-grow: 1;
+    }
+
+    body.light-mode {
+      background-color: #f5f5f5;
+      color: #333333;
+    }
+
+    .light-mode .kanban-column {
+      background-color: #fff5e6;
+      border-color: #d9d9d9;
+    }
+
+    .light-mode .kanban-task {
+      background-color: #fff9e6;
+      border-color: #e6e6e6;
+    }
+
+    .light-mode .kanban-task:hover {
+      background-color: #ffffff;
+    }
+
+    .light-mode .task-deadline {
+      background-color: #ffffff;
+      border-color: #d9d9d9;
+    }
+
+    .light-mode .add-task-form input[type="text"] {
+      background-color: #ffffff;
+      color: #333333;
+      border-color: #d9d9d9;
+    }
+
+    .light-mode .add-task-form button {
+      background-color: #4caf50;
+      color: #ffffff;
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .user-actions .btn {
+      white-space: nowrap;
+    }
+
+    .light-mode .edit-button {
+      background-color: #ffc107;
+      color: #333333;
+    }
+
+    .light-mode .delete-button {
+      background-color: #dc3545;
+      color: #ffffff;
+    }
+
+    #analysisContent {
+      white-space: pre-wrap;
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    .modal-content {
+      background-color: var(--bs-body-bg);
+      color: var(--bs-body-color);
+    }
+
+    .light-mode .modal-content {
+      background-color: #fff;
+      color: #333;
+    }
+
+    .analysis-card {
+      margin: 20px 0;
+      transition: all 0.3s ease;
+    }
+
+    .analysis-card .card {
+      background-color: #2c2c2c;
+      border: 1px solid #3a3a3a;
+      border-radius: 5px;
+    }
+
+    .light-mode .analysis-card .card {
+      background-color: #fff5e6;
+      border-color: #d9d9d9;
+    }
+
+    .analysis-card .card-header {
+      background-color: #383838;
+      border-bottom: 1px solid #4a4a4a;
+      padding: 1rem;
+    }
+
+    .light-mode .analysis-card .card-header {
+      background-color: #fff9e6;
+      border-bottom-color: #d9d9d9;
+    }
+
+    .analysis-card .btn-close {
+      background-color: transparent;
+      opacity: 0.8;
+    }
+
+    .analysis-card .card-body {
+      padding: 1.25rem;
+    }
+
+    .light-mode .analysis-card .card-body {
+      color: #333;
+    }
+
+    .analysis-card {
+      margin: 20px 0;
+      transition: all 0.3s ease;
+    }
+
+    .analysis-card.minimized .card-body {
+      display: none;
+    }
+
+    .analysis-card.minimized #toggleIcon {
+      transform: rotate(-90deg);
+      display: inline-block;
+    }
+
+    #toggleIcon {
+      transition: transform 0.3s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+      <h2>Diário de tarefas</h2>
+      <div class="user-actions">
+        <a href="/logout" class="btn btn-danger">Logout</a>
+        <button id="modeToggle" class="btn btn-light">Modo claro ☀️</button>
+      </div>
+    </div>
+
+    <form th:action="@{/adicionarTarefa}" th:method="post">
+      <input type="hidden" name="metaId" th:value="${meta.id}" />
+      <input type="hidden" name="username" th:value="${username}" />
+      <div class="add-task-form">
+        <input type="text" id="taskInput" name="tarefa" placeholder="Adicionar nova tarefa" />
+        <button>Adicionar</button>
+      </div>
+    </form>
+
+    <div class="kanban-board">
+      <button class="btn btn-primary" onclick="returnToGoals()">⬅️</button>
+      <div class="kanban-column" name="objetivo" th:text="'Meta: ' + ${meta.tituloMeta}">
+      </div>
+
+      <form th:action="@{/gerarTarefa}" th:method="post">
+        <input type="hidden" name="objetivo" th:value="${meta.tituloMeta}" />
+        <input type="hidden" name="metaId" th:value="${meta.id}" />
+        <input type="hidden" name="username" th:value="${username}" />
+        <button class="button-generate-task">Gerar tarefas</button>
+        <button type="button" class="button-generate-task" onclick="analisarTarefas()">Analisar tarefas</button>
+      </form>
+    </div>
+
+    <div id="analysisCard" class="analysis-card" th:style="${analise != null ? 'display: block;' : 'display: none;'}">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Análise das Tarefas</h5>
+          <div>
+            <button type="button" class="btn btn-sm btn-secondary me-2" onclick="toggleAnalysis()">
+              <span id="toggleIcon">🔽</span>
+            </button>
+            <button type="button" class="btn-close" onclick="hideAnalysis()"></button>
+          </div>
+        </div>
+        <div id="analysisBody" class="card-body">
+          <div id="analysisContent" th:text="${analise}"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kanban-board">
+      <div class="kanban-column">
+        <h5>lista de tarefas 💡</h5>
+        <div th:each="tarefa : ${listaTarefas}" th:if="${tarefa.status == 'lista de tarefas '}" class="kanban-task"
+          draggable="true">
+          <input type="hidden" name="txt" th:value="${tarefa.taskText}" />
+          <input type="hidden" name="id" th:value="${tarefa.id}" />
+          <div class="task-title" th:text="${tarefa.taskText}"></div>
+
+          <div class="task-description" th:if="${tarefa.descricao}"
+            style="border: 1px solid black; padding: 10px; margin-top: 5px;" th:text="${tarefa.descricao}"></div>
+
+          <div class="prazo-container">
+            <div class="prazo-label">prazo: </div>
+            <input type="date" class="form-control me-2 task-deadline" 
+                   th:value="${#dates.format(tarefa.prazo, 'yyyy-MM-dd')}"
+                   onchange="updateTaskDeadline(this)" />
+          </div>
+
+          <div class="actions">
+            <button class="edit" onclick="editTask(this)" data-bs-toggle="modal" data-bs-target="#editTaskModal">
+              ✏️
+            </button>
+            <button class="delete" onclick="deleteTask(this)" data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="kanban-column">
+        <h5>em andamento 🕗</h5>
+        <div th:each="tarefa : ${listaTarefas}" th:if="${tarefa.status == 'em andamento '}" class="kanban-task"
+          draggable="true">
+          <input type="hidden" name="txt" th:value="${tarefa.taskText}" />
+          <input type="hidden" name="id" th:value="${tarefa.id}" />
+          <div class="task-title" th:text="${tarefa.taskText}"></div>
+
+          <div class="task-description" th:if="${tarefa.descricao}"
+            style="border: 1px solid black; padding: 10px; margin-top: 5px;" th:text="${tarefa.descricao}"></div>
+
+          <div class="prazo-container">
+            <div class="prazo-label">prazo: </div>
+            <input type="date" class="form-control me-2 task-deadline" 
+                   th:value="${#dates.format(tarefa.prazo, 'yyyy-MM-dd')}"
+                   onchange="updateTaskDeadline(this)" />
+          </div>
+
+          <div class="actions">
+            <button class="edit" onclick="editTask(this)" data-bs-toggle="modal" data-bs-target="#editTaskModal">
+              ✏️
+            </button>
+            <button class="delete" onclick="deleteTask(this)" data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="kanban-column">
+        <h5>concluídas 🎯</h5>
+        <div th:each="tarefa : ${listaTarefas}" th:if="${tarefa.status == 'concluídas '}" class="kanban-task"
+          draggable="true">
+          <input type="hidden" name="txt" th:value="${tarefa.taskText}" />
+          <input type="hidden" name="id" th:value="${tarefa.id}" />
+          <div class="task-title" th:text="${tarefa.taskText}"></div>
+          <div class="actions">
+            <button class="edit" onclick="editTask(this)" data-bs-toggle="modal" data-bs-target="#editTaskModal">
+              ✏️
+            </button>
+            <button class="edit" onclick="deleteTask(this)" data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="loadingSpinner" class="spinner-div">
+      <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+
+    <div class="container mt-5">
+      <!-- Modal -->
+      <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editTaskModalLabel">
+                Editar tarefa
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                onclick="closeModal()"></button>
+            </div>
+            <div class="modal-body">
+              Digite um novo nome para a tarefa:
+              <input type="text" id="editTaskInput" class="form-control mt-2" />
+            </div>
+            <div class="modal-body">
+              Digite uma nova descrição para a tarefa:
+              <input type="text" id="editTaskDescriptionInput" class="form-control mt-2" />
+            </div>
+            <div class="modal-body">
+              Escolha um prazo para a tarefa:
+              <input type="date" id="editTaskDeadlineInput" class="form-control mt-2" />
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeModal()">
+                Fechar
+              </button>
+              <button type="button" class="btn btn-primary" onclick="saveTaskChanges()">
+                Salvar mudanças
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mt-5">
+    <!-- Modal -->
+    <div class="modal fade" id="deleteTaskModal" tabindex="-1" aria-labelledby="deleteTaskModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteTaskModalLabel">
+              Deletar tarefa
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+              onclick="closeModal()"></button>
+          </div>
+          <div class="modal-body">
+            Tem certeza que deseja deletar essa tarefa?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeModal()">
+              Fechar
+            </button>
+            <button type="button" class="btn delete-button" onclick="deleteTaskModal()">
+              Deletar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // JavaScript for drag-and-drop functionality
+    const tasks = document.querySelectorAll(".kanban-task");
+
+    tasks.forEach((task) => {
+      task.addEventListener("dragstart", () => {
+        task.classList.add("dragging");
+      });
+
+      task.addEventListener("dragend", () => {
+        task.classList.remove("dragging");
+      });
+    });
+
+    function showLoading() {
+      var loadingSpinner = document.getElementById('loadingSpinner');
+      loadingSpinner.style.display = 'block';
+    }
+
+    function hideLoading() {
+      var loadingSpinner = document.getElementById('loadingSpinner');
+      loadingSpinner.style.display = 'none';
+    }
+
+    const columns = document.querySelectorAll(".kanban-column");
+
+    columns.forEach((column) => {
+      column.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(column, e.clientY);
+        const draggingElement = document.querySelector(".dragging");
+        if (afterElement == null) {
+          column.appendChild(draggingElement);
+        } else {
+          column.insertBefore(draggingElement, afterElement);
+        }
+      });
+
+      column.addEventListener("drop", async (e) => {
+        const columnName = column.querySelector("h5").innerText;
+        const taskElement = document.querySelector(".dragging");
+        const taskId = taskElement.querySelector("input[name='id']").value;
+        const metaId = document.querySelector("input[name='metaId']").value;
+
+        await fetch("/editarStatusTarefa", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            id: taskId,
+            metaId: metaId,
+            status: columnName
+              .trimEnd()
+              .replace(
+                /[\p{Emoji_Presentation}\p{Extended_Pictographic}]$/u,
+                ""
+              ),
+          }),
+        });
+
+        location.reload();
+      });
+    });
+
+    function getDragAfterElement(column, y) {
+      const draggableElements = [
+        ...column.querySelectorAll(".kanban-task:not(.dragging)"),
+      ];
+
+      return draggableElements.reduce(
+        (closest, child) => {
+          const box = child.getBoundingClientRect();
+          const offset = y - box.top - box.height / 2;
+          if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+          } else {
+            return closest;
+          }
+        },
+        { offset: Number.NEGATIVE_INFINITY }
+      ).element;
+    }
+
+    var currentTaskItem = null;
+
+    var deleteModal = new bootstrap.Modal(document.getElementById("deleteTaskModal"));
+
+    var editTaskModal = new bootstrap.Modal(
+      document.getElementById("editTaskModal")
+    );
+
+    function editTask(element) {
+      currentTaskItem = element.closest(".kanban-task");
+      var taskTitle = currentTaskItem.querySelector(".task-title").innerText;
+      var taskDescription = currentTaskItem.querySelector(".task-description")?.innerText || "";
+      var taskDeadline = currentTaskItem.querySelector(".task-deadline")?.innerText || "";
+      document.getElementById("editTaskInput").value = taskTitle;
+      document.getElementById("editTaskDescriptionInput").value = taskDescription;
+      document.getElementById("editTaskDeadlineInput").value = taskDeadline;
+      editTaskModal.show();
+    }
+
+    async function saveTaskChanges() {
+      var newTitle = document.getElementById("editTaskInput").value;
+      var newDescription = document.getElementById("editTaskDescriptionInput").value;
+      var newDeadline = document.getElementById("editTaskDeadlineInput").value;
+      if (newTitle && currentTaskItem) {
+        var id = currentTaskItem.querySelector("input[name='id']").value;
+        var metaId = document.querySelector("input[name='metaId']").value;
+        showLoading();
+        var response = await fetch("/editarTarefa", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            id: id,
+            txt: newTitle,
+            descricao: newDescription,
+            prazo: newDeadline,
+            metaId: metaId
+          }),
+        });
+        hideLoading();
+        location.reload();
+      }
+    }
+
+    function closeModal() {
+      editTaskModal.hide();
+    }
+
+    var currentTaskItem = null;
+
+    function deleteTask(element) {
+      currentTaskItem = element.closest(".kanban-task");
+      deleteModal.show();
+    }
+
+    async function deleteTaskModal() {
+      var taskItem = currentTaskItem.closest(".kanban-task");
+      var id = taskItem.querySelector("input[name='id']").value;
+      var metaId = document.querySelector("input[name='metaId']").value;
+      showLoading();
+      var response = await fetch("/deletarTarefa", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          id: id,
+          metaId: metaId
+        }),
+      });
+
+      hideLoading();
+      location.reload();
+    }
+
+    function returnToGoals() {
+      var usernameElement = document.querySelector('input[name="username"]');
+      var username = usernameElement ? usernameElement.value : null;
+
+      if (username) {
+        window.location.href = "/home/" + username;
+      } else {
+        alert("username not found");
+      }
+    }
+
+    function updateTaskDeadline(element) {
+      var taskDiv = element.closest('.kanban-task');
+      var taskId = taskDiv.querySelector('input[name="id"]').value;
+      var newDeadline = element.value;
+      var metaId = document.querySelector("input[name='metaId']").value;
+
+      showLoading();
+      fetch("/editarPrazoTarefa", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          id: taskId,
+          prazo: newDeadline,
+          metaId: metaId
+        }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        hideLoading();
+        if (data.success) {
+          console.log("Task deadline updated successfully");
+        } else {
+          console.error("Failed to update task deadline");
+        }
+      })
+      .catch(error => {
+        hideLoading();
+        console.error("Error updating task deadline:", error);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const modeToggle = document.getElementById('modeToggle');
+      const body = document.body;
+
+      // Check if dark mode preference is stored
+      const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+      // Set initial mode state
+      if (isDarkMode) {
+        body.classList.remove('light-mode');
+        modeToggle.classList.remove('btn-dark');
+        modeToggle.classList.add('btn-light');
+        modeToggle.textContent = 'Modo claro ☀️';
+      } else {
+        body.classList.add('light-mode');
+        modeToggle.classList.remove('btn-light');
+        modeToggle.classList.add('btn-dark');
+        modeToggle.textContent = 'Modo escuro 🌙';
+      }
+
+      modeToggle.addEventListener('click', function() {
+        body.classList.toggle('light-mode');
+        const isLightMode = body.classList.contains('light-mode');
+        
+        if (isLightMode) {
+          modeToggle.classList.remove('btn-light');
+          modeToggle.classList.add('btn-dark');
+          modeToggle.textContent = 'Modo escuro 🌙';
+        } else {
+          modeToggle.classList.remove('btn-dark');
+          modeToggle.classList.add('btn-light');
+          modeToggle.textContent = 'Modo claro ☀️';
+        }
+        
+        // Store mode preference
+        localStorage.setItem('darkMode', !isLightMode);
+      });
+    });
+
+    async function analisarTarefas() {
+      showLoading();
+      const metaId = document.querySelector("input[name='metaId']").value;
+      const analysisCard = document.getElementById('analysisCard');
+      
+      try {
+        const response = await fetch(`/analisarTarefas/${metaId}`);
+        const data = await response.json();
+        
+        document.getElementById('analysisContent').innerHTML = data.analysis;
+        analysisCard.style.display = 'block';
+        
+        // Restaura o estado salvo
+        const isMinimized = localStorage.getItem('analysisMinimized') === 'true';
+        if (isMinimized) {
+          analysisCard.classList.add('minimized');
+          document.getElementById('toggleIcon').textContent = '▶️';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Erro ao analisar tarefas');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function hideAnalysis() {
+      document.getElementById('analysisCard').style.display = 'none';
+    }
+
+    function toggleAnalysis() {
+      const card = document.getElementById('analysisCard');
+      const icon = document.getElementById('toggleIcon');
+      
+      card.classList.toggle('minimized');
+      
+      if (card.classList.contains('minimized')) {
+        icon.textContent = '▶️';
+        localStorage.setItem('analysisMinimized', 'true');
+      } else {
+        icon.textContent = '🔽';
+        localStorage.setItem('analysisMinimized', 'false');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Verifica se há análise e estado minimizado salvo
+      const analysisCard = document.getElementById('analysisCard');
+      if (analysisCard.style.display === 'block') {
+        const isMinimized = localStorage.getItem('analysisMinimized') === 'true';
+        if (isMinimized) {
+          analysisCard.classList.add('minimized');
+          document.getElementById('toggleIcon').textContent = '▶️';
+        }
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>
